@@ -36,6 +36,9 @@ inputs:
   wait:
     description: How long to keep asking until the gate opens or the started hook ends, such as 10m. At most 30m. Default no wait.
     required: false
+  dedupe-key:
+    description: For start, a key that makes a retried step answer deduped instead of starting the hook again.
+    required: false
   api-key:
     description: A Bench47 API key. Leave it out in a trusted workflow, which proves itself with GitHub's token (needs `permissions: id-token: write`).
     required: false

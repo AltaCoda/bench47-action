@@ -57,6 +57,16 @@ describe("readPlan", () => {
     ]);
   });
 
+  it("passes dedupe-key for start only", () => {
+    expect(readPlan(from({ start: "release-notes", "dedupe-key": "release-v1.2.3" })).args).toEqual([
+      "ci", "start", "release-notes", "--dedupe-key", "release-v1.2.3",
+    ]);
+    expect(() => readPlan(from({ gate: "g", "dedupe-key": "k" }))).toThrow("`dedupe-key` is for `start` only.");
+    expect(() => readPlan(from({ signoff: "qa", subject: "s", "dedupe-key": "k" }))).toThrow(
+      "`dedupe-key` is for `start` only.",
+    );
+  });
+
   it("needs exactly one of gate, signoff and start", () => {
     expect(() => readPlan(from({}))).toThrow("Set one of `gate`, `signoff` or `start`.");
     expect(() => readPlan(from({ gate: "a", start: "b" }))).toThrow(

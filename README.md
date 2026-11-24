@@ -88,6 +88,7 @@ Set exactly one of `gate`, `signoff` and `start`.
 | `summary` | For a sign-off: a short sentence about it. |
 | `link` | For a sign-off: a link to what it is based on, such as this run. |
 | `wait` | How long to keep asking until the gate opens or the started hook ends, such as `10m`. At most `30m`. Waiting uses CI minutes, so the default is no wait. |
+| `dedupe-key` | For `start`: a key that makes a retried step answer `deduped` instead of starting the hook again, such as `release-${{ github.ref_name }}`. |
 | `api-key` | A Bench47 API key. Leave it out in a trusted workflow. The Action masks it in the log. |
 | `server` | Your Bench47 server's URL, for a self-hosted Bench47. Default the hosted Bench47. |
 | `version` | The `bnch` version to run. Default the version this release of the Action is pinned to. |

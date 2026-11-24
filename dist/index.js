@@ -23900,6 +23900,7 @@ function readPlan(get) {
   if (command === "signoff") {
     if (inputs.length > 0) throw new InputError("`inputs` is for `gate` and `start`, not `signoff`.");
     if (wait !== "") throw new InputError("`wait` is for `gate` and `start`, not `signoff`.");
+    if (val("dedupe-key") !== "") throw new InputError("`dedupe-key` is for `start` only.");
     const subject = val("subject");
     if (subject === "") throw new InputError("A sign-off needs `subject`.");
     args.push("--subject", subject);
@@ -23923,6 +23924,11 @@ function readPlan(get) {
     }
     for (const kv of inputs) args.push("--input", kv);
     if (wait !== "") args.push("--wait", wait);
+    const dedupe = val("dedupe-key");
+    if (dedupe !== "") {
+      if (command !== "start") throw new InputError("`dedupe-key` is for `start` only.");
+      args.push("--dedupe-key", dedupe);
+    }
   }
   const apiKey = get("api-key").trim() || void 0;
   const version = val("version").replace(/^v/, "") || void 0;
