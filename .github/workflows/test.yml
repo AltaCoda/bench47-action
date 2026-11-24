@@ -1,0 +1,131 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: dist/ matches the source
+        run: |
+          if ! git diff --quiet -- dist; then
+            echo "::error::dist/ is out of date. Run npm run build and commit dist/."
+            git diff --stat -- dist
+            exit 1
+          fi
+
+  e2e:
+    name: Run the built Action (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PORT: "8747"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # A fake bnch signed with a fresh test key, and the Action built from
+      # this commit's source with that key in place of the real one.
+      - run: node e2e/make-release.mjs
+      - name: Start the recorded server
+        run: |
+          nohup node e2e/fake-server.mjs "$PORT" > "$RUNNER_TEMP/fake-server.log" 2>&1 &
+          for i in $(seq 1 50); do curl -fsS "http://127.0.0.1:$PORT/__stats" >/dev/null 2>&1 && exit 0; sleep 0.2; done
+          cat "$RUNNER_TEMP/fake-server.log"; exit 1
+
+      - name: Open gate, with an API key
+        id: open
+        uses: ./e2e/out/action
+        with:
+          org: acme
+          gate: release-ready
+          server: http://127.0.0.1:8747
+          api-key: mb_e2e_not_a_real_key
+          inputs: |
+            sha=${{ github.sha }}
+            release=v1.2.3
+      - name: The open gate passed
+        run: test "${{ steps.open.outputs.open }}" = "true"
+
+      - name: Closed gate
+        id: closed
+        continue-on-error: true
+        uses: ./e2e/out/action
+        with:
+          org: acme
+          gate: release-blocked
+          server: http://127.0.0.1:8747
+      - name: The closed gate failed the step
+        run: |
+          test "${{ steps.closed.outcome }}" = "failure"
+          test "${{ steps.closed.outputs.open }}" = "false"
+          test "${{ steps.closed.outputs.failing }}" = "Every release item is shipped"
+
+      - name: Sign-off, from the cached bnch
+        id: signoff
+        uses: ./e2e/out/action
+        with:
+          org: acme
+          signoff: qa
+          subject: release:v1.2.3
+          link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          server: http://127.0.0.1:8747
+      - run: test -n "${{ steps.signoff.outputs.signoff_id }}"
+
+      - name: Tampered archive
+        id: tampered
+        continue-on-error: true
+        uses: ./e2e/out/action
+        with:
+          org: acme
+          gate: tamper-check
+          server: http://127.0.0.1:8747
+          version: 0.99.0
+      - name: The tampered archive failed the step
+        run: test "${{ steps.tampered.outcome }}" = "failure"
+
+      - name: One download, no run for the tampered archive
+        run: |
+          os=$(uname -s | tr '[:upper:]' '[:lower:]')
+          case "$(uname -m)" in x86_64) arch=amd64 ;; arm64|aarch64) arch=arm64 ;; esac
+          node e2e/check-stats.mjs "$PORT" "$os" "$arch"
+
+  windows:
+    # bnch has no Windows build. The step must fail with one clear line.
+    name: Refuse Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run the Action on Windows
+        id: win
+        continue-on-error: true
+        uses: ./
+        with:
+          gate: release-ready
+          server: http://127.0.0.1:8747
+      - name: It failed
+        shell: bash
+        run: test "${{ steps.win.outcome }}" = "failure"

@@ -1,0 +1,71 @@
+name: Bench47
+description: Ask a Bench47 gate, post a sign-off or start a Bench47 hook from a workflow, with no stored key or with an API key.
+author: AltaCoda
+branding:
+  icon: check-circle
+  color: purple
+
+inputs:
+  org:
+    description: The Bench47 organization. Needed when the job has no API key and proves itself with GitHub's token.
+    required: false
+  gate:
+    description: The gate to ask. The step passes when the gate is open and fails when it is not. Set exactly one of gate, signoff and start.
+    required: false
+  signoff:
+    description: The sign-off to post. Set exactly one of gate, signoff and start.
+    required: false
+  start:
+    description: The hook to start. Set exactly one of gate, signoff and start.
+    required: false
+  inputs:
+    description: The gate's or hook's inputs, one key=value per line.
+    required: false
+  subject:
+    description: For a sign-off, what it is about, such as release:v1.2.3.
+    required: false
+  state:
+    description: For a sign-off, given or refused. Default given.
+    required: false
+  summary:
+    description: For a sign-off, a short sentence about it.
+    required: false
+  link:
+    description: For a sign-off, a link to what it is based on, such as this run.
+    required: false
+  wait:
+    description: How long to keep asking until the gate opens or the started hook ends, such as 10m. At most 30m. Default no wait.
+    required: false
+  api-key:
+    description: A Bench47 API key. Leave it out in a trusted workflow, which proves itself with GitHub's token (needs `permissions: id-token: write`).
+    required: false
+  server:
+    description: Your Bench47 server's URL, for a self-hosted Bench47. bnch is then downloaded from that server, so it matches it. Default the hosted Bench47.
+    required: false
+  version:
+    description: The bnch version to run. Default the one this release of the Action is pinned to (on a self-host, the one the server carries).
+    required: false
+
+outputs:
+  open:
+    description: For a gate, true when it is open and false when it is not.
+  failing:
+    description: For a gate, the requirements that are not met.
+  url:
+    description: A link to the gate, sign-off or started job in Bench47.
+  signoff_id:
+    description: For a sign-off, its id.
+  disposition:
+    description: For start, what became of the start, such as composed, awaiting_approval or deduped.
+  job_id:
+    description: For start, the job's id.
+  run_id:
+    description: For start of a workflow hook, the run's id.
+  outcome:
+    description: For start with wait, how it ended.
+  last_line:
+    description: For start with wait, the job's or run's last line.
+
+runs:
+  using: node24
+  main: dist/index.js

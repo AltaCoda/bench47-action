@@ -1,0 +1,21 @@
+{
+  "gate release-ready": {
+    "exit": 0,
+    "say": "release-ready is open: every release item is decided and shipped.",
+    "outputs": { "open": "true", "failing": "", "url": "https://app.bench47.com/acme/dispatch/gates/release-ready" }
+  },
+  "gate release-blocked": {
+    "exit": 1,
+    "say": "release-blocked is not open: 2 release items are not shipped.",
+    "outputs": {
+      "open": "false",
+      "failing": "Every release item is shipped",
+      "url": "https://app.bench47.com/acme/dispatch/gates/release-blocked"
+    }
+  },
+  "signoff qa": {
+    "exit": 0,
+    "say": "Signed off qa for release:v1.2.3.",
+    "outputs": { "signoff_id": "0192f1a0-0000-7000-8000-000000000001", "url": "https://app.bench47.com/acme/dispatch/signoffs" }
+  }
+}
