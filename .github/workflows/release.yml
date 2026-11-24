@@ -1,0 +1,56 @@
+name: Release
+
+# After the tests pass on a push to main, releases the version in
+# package.json: tags vX.Y.Z, publishes a GitHub release and moves the major
+# tag (v1) to it. A push that does not change the version releases nothing.
+
+on:
+  workflow_run:
+    workflows: [Test]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+jobs:
+  release:
+    name: Tag and move the major tag
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::package.json version $version is not X.Y.Z"; exit 1; }
+          tag="v$version"
+          major="v${version%%.*}"
+
+          # Only the newest commit on main may move the major tag.
+          if [ "$(git rev-parse origin/main)" != "$SHA" ]; then
+            echo "$SHA is no longer the head of main; the next run releases."
+            exit 0
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists; nothing to release."
+            exit 0
+          fi
+
+          git tag "$tag" "$SHA"
+          git push origin "$tag"
+          gh release create "$tag" --verify-tag --title "$tag" --generate-notes --latest
+          git tag -f "$major" "$SHA"
+          git push -f origin "$major"
+          echo "Released $tag; $major now points at $SHA."
