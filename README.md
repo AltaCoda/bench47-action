@@ -178,11 +178,22 @@ server (`e2e/`) with a fake `bnch` signed by a test key generated for the run.
 
 ### Releasing
 
-1. Set `BNCH_VERSION` in `src/release.ts` to the `bnch` release this version of
-   the Action runs, and `CI_SINCE` / `START_SINCE` to the first `bnch` releases
-   with `bnch ci` and `bnch ci start`.
-2. `npm run build`, commit `dist/`.
-3. Tag `vX.Y.Z`, and move `v1` to it: `git tag -f v1 && git push -f origin v1`.
+Releases need no manual tagging.
+
+- **A new bnch.** The Bump bnch workflow (`.github/workflows/bnch-bump.yml`)
+  checks `https://get.bench47.com/bnch/releases/latest.json` every six hours
+  (or on demand, or on a `bnch-released` repository dispatch). When a newer
+  bnch is out, it raises `BNCH_VERSION` in `src/release.ts`, bumps the patch
+  version in `package.json`, rebuilds `dist/`, opens a pull request and runs
+  the tests on it. A new bnch major is not bumped: the workflow fails and a
+  person makes that change.
+- **Any other change.** Raise `version` in `package.json` in the same pull
+  request (`npm version <patch|minor> --no-git-tag-version`) and commit the
+  rebuilt `dist/`.
+- **On merge.** When the tests pass on `main`, the Release workflow
+  (`.github/workflows/release.yml`) tags `vX.Y.Z` from `package.json`, publishes
+  a GitHub release and moves `v1` to it. A merge that leaves the version
+  unchanged releases nothing.
 
 ## Licence
 

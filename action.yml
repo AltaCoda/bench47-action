@@ -40,7 +40,7 @@ inputs:
     description: For start, a key that makes a retried step answer deduped instead of starting the hook again.
     required: false
   api-key:
-    description: A Bench47 API key. Leave it out in a trusted workflow, which proves itself with GitHub's token (needs `permissions: id-token: write`).
+    description: "A Bench47 API key. Leave it out in a trusted workflow, which proves itself with GitHub's token (needs `permissions: id-token: write`)."
     required: false
   server:
     description: Your Bench47 server's URL, for a self-hosted Bench47. bnch is then downloaded from that server, so it matches it. Default the hosted Bench47.

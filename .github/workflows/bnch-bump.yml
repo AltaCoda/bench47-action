@@ -1,0 +1,77 @@
+name: Bump bnch
+
+# Opens a pull request that pins the newest published bnch. Merging it
+# releases the Action (release.yml). A person still reviews and merges.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [bnch-released]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: bnch-bump
+
+jobs:
+  bump:
+    name: Pin the latest bnch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - id: check
+        run: node scripts/bnch-bump.mjs
+
+      - id: branch
+        if: steps.check.outputs.bumped == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LATEST: ${{ steps.check.outputs.latest }}
+        run: |
+          branch="bump/bnch-$LATEST"
+          echo "name=$branch" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "$branch already exists; nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and test the bump
+        if: steps.check.outputs.bumped == 'true' && steps.branch.outputs.exists != 'true'
+        run: |
+          npm version patch --no-git-tag-version
+          npm ci
+          npm run all
+
+      - name: Open the pull request
+        if: steps.check.outputs.bumped == 'true' && steps.branch.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          LATEST: ${{ steps.check.outputs.latest }}
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add src/release.ts dist package.json package-lock.json
+          git commit -m "Pin bnch $LATEST (v$version)"
+          git push origin "$BRANCH"
+          gh pr create --base main --head "$BRANCH" \
+            --title "Pin bnch $LATEST (v$version)" \
+            --body "Raises the pinned bnch from $CURRENT to $LATEST and the Action to v$version. Merging releases v$version and moves v${version%%.*} to it.
+
+          Opened by the Bump bnch workflow."
+          # A pull request opened with GITHUB_TOKEN starts no workflows, so
+          # run the tests on the branch: their checks show on the PR's commit.
+          gh workflow run test.yml --ref "$BRANCH"

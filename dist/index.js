@@ -23769,7 +23769,7 @@ function hexId(id) {
 }
 
 // src/release.ts
-var BNCH_VERSION = "0.18.2";
+var BNCH_VERSION = "0.19.0";
 var CI_SINCE = "0.19.0";
 var START_SINCE = "0.19.0";
 var PUBLIC_KEY = "RWTbl1jB+wMGEtA2BV7rzC0x0YHydUXFkTqAN1HLHp04eUT8gxdZyNZf";

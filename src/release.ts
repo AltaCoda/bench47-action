@@ -1,19 +1,17 @@
-// What this release of the Action trusts and pins. Bump BNCH_VERSION (and the
-// *_SINCE versions once known) for each release of the Action.
+// What this release of the Action trusts and pins. The bnch-bump workflow
+// raises BNCH_VERSION (and package.json's patch version) when a newer bnch is
+// published; merging that PR releases the Action (release.yml).
 
 /**
  * The bnch version this release of the Action runs when `version` is not
- * given. bnch 0.18.2 is the latest release today and has no `bnch ci`; a
- * release of the Action must pin the first bnch version that has `ci` (and,
- * for `start`, `ci start`).
+ * given. It is never below CI_SINCE and START_SINCE.
  */
-export const BNCH_VERSION = "0.18.2";
+export const BNCH_VERSION = "0.19.0";
 
 /**
  * The first bnch versions with `bnch ci` and with `bnch ci start`. Older
- * versions are refused with a line saying which version is needed. They are
- * the next bnch minor until the release that carries them is cut; set them to
- * that release's version then.
+ * versions are refused with a line saying which version is needed. Both
+ * arrived in bnch 0.19.0.
  */
 export const CI_SINCE = "0.19.0";
 export const START_SINCE = "0.19.0";
