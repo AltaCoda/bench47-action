@@ -1,6 +1,6 @@
 {
   "name": "bench47-action",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Ask a Bench47 gate, post a sign-off or start a hook from a GitHub workflow.",
   "license": "MIT",
