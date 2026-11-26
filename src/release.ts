@@ -6,7 +6,7 @@
  * The bnch version this release of the Action runs when `version` is not
  * given. It is never below CI_SINCE and START_SINCE.
  */
-export const BNCH_VERSION = "0.19.0";
+export const BNCH_VERSION = "0.20.0";
 
 /**
  * The first bnch versions with `bnch ci` and with `bnch ci start`. Older
